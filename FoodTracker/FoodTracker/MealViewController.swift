@@ -9,13 +9,14 @@
 import UIKit
 import os.log
 
-class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
     
     //MARK: Properties
     @IBOutlet weak var nameTextField: UITextField!
     @IBOutlet weak var photoImageView: UIImageView!
     @IBOutlet weak var ratingControl: RatingControl!
     @IBOutlet weak var saveButton: UIBarButtonItem!
+    @IBOutlet weak var commentTextView: UITextView!
     
     /*
     This value is either passed by 'MealTableViewController' in 'prepare(for:sender:)'
@@ -28,17 +29,24 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         
         // Handle the text field’s user input through delegate callbacks.
         nameTextField.delegate = self
+      
         
-        //Enable the Save button only if the text field has a valid Meal name.
-        updateSaveButtonState()
-        
-        // Set upp views if editing an existing Meal.
+        // Set up views if editing an existing Meal
         if let meal = meal {
             navigationItem.title = meal.name
             nameTextField.text   = meal.name
             photoImageView.image = meal.photo
             ratingControl.rating = meal.rating
+            commentTextView.text = meal.comment
         }
+        
+        //Enable the Save button only if the text field has a valid Meal name.
+        updateSaveButtonState()
+        
+        //text view border
+        commentTextView.layer.borderWidth = 1
+        commentTextView.layer.borderColor = UIColor.lightGray.cgColor
+        commentTextView.layer.cornerRadius = 5.0
     }
     
     //MARK: UITextFieldDelegate
@@ -82,7 +90,7 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
     
     //MARK: UINavigationControllerDelegate
     
-    // This method lets you configure a view controller begore it's presented.
+    // This method lets you configure a view controller before it's presented.
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         super.prepare(for: segue, sender: sender)
         
@@ -95,9 +103,10 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         let name = nameTextField.text ?? ""
         let photo = photoImageView.image
         let rating = ratingControl.rating
+        let comment = commentTextView.text ?? ""
         
-        // Set the meal to be passed t MealTableViewController after the unwind segue.
-        meal = Meal(name: name, photo: photo, rating: rating)
+        // Set the meal to be passed to MealTableViewController after the unwind segue.
+        meal = Meal(name: name, photo: photo, rating: rating, comment: comment)
     }
     
     //MARK: Actions
@@ -127,7 +136,7 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         } else if let owningNavigationController = navigationController {
             owningNavigationController.popViewController(animated: true)
         } else {
-            fatalError("The MealViewController is not inside a navigation controller.")
+            fatalError("The MealViewController is not inside a navigation controller")
         }
         
         

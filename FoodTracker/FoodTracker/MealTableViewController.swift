@@ -9,7 +9,10 @@
 import UIKit
 import os.log
 
-class MealTableViewController: UITableViewController {
+class MealTableViewController: UITableViewController, UISearchBarDelegate{
+    
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     
     //MARK: Properties
     var meals = [Meal]()
@@ -19,9 +22,16 @@ class MealTableViewController: UITableViewController {
         
         // Use the edit button item provided by the table view controller
         navigationItem.leftBarButtonItem = editButtonItem
-
-        //Load the sample data
-        loadSampleMeals()
+        
+        // Load any saved meals, otherwise load sample data
+        if let savedMeals = loadMeals() {
+            meals += savedMeals
+        } else {
+            //Load the sample data
+            loadSampleMeals()
+        }
+        
+        searchBar.delegate = self
     }
 
     override func didReceiveMemoryWarning() {
@@ -73,6 +83,7 @@ class MealTableViewController: UITableViewController {
         if editingStyle == .delete {
             // Delete the row from the data source
             meals.remove(at: indexPath.row)
+            saveMeals()
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
@@ -138,7 +149,10 @@ class MealTableViewController: UITableViewController {
                 let newIndexPath = IndexPath(row: meals.count, section: 0)
                 meals.append(meal)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
-            }            
+            }
+            
+            // Save the meals
+            saveMeals();
         }
     }
     //MARK: Private Methods
@@ -148,19 +162,67 @@ class MealTableViewController: UITableViewController {
         let photo2 = UIImage(named: "meal2")
         let photo3 = UIImage(named: "meal3")
         
-        guard let meal1 = Meal(name: "Caprese Salad", photo: photo1, rating: 4) else {
+        guard let meal1 = Meal(name: "Caprese Salad", photo: photo1, rating: 4, comment: "") else {
             fatalError("Unable to instantiate meal1")
         }
         
-        guard let meal2 = Meal(name: "Chicken and Potatoes", photo: photo2, rating: 5) else {
+        guard let meal2 = Meal(name: "Chicken and Potatoes", photo: photo2, rating: 5, comment: "") else {
             fatalError("Unable to instantiate meal2")
         }
         
-        guard let meal3 = Meal(name: "Pasta with Meatballs", photo: photo3, rating: 3) else {
+        guard let meal3 = Meal(name: "Pasta with Meatballs", photo: photo3, rating: 3, comment: "") else {
             fatalError("Unable to instantiate meal3")
         }
         
         meals += [meal1, meal2, meal3]
+    }
+    
+    private func saveMeals() {
+        let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(meals, toFile: Meal.ArchieveURL.path)
+        
+        if isSuccessfulSave {
+            os_log("Meals sucessfully saved.", log: OSLog.default, type: .debug)
+        } else {
+            os_log("Failed to save meals...", log: OSLog.default, type: .error)
+        }
+    }
+    
+    private func loadMeals() -> [Meal]? {
+        return NSKeyedUnarchiver.unarchiveObject(withFile: Meal.ArchieveURL.path) as? [Meal]
+    }
+    
+    // Search bar function
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        print("begin : " + searchBar.text!)
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        print("End : " + searchBar.text!)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        print("Cancel button clicked : " + searchBar.text!)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        print("Search button clicked : " + searchBar.text!)
+        
+    }
+    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        print("searchText : " + searchText)
+        
+        //do search logic here
+        let savedMeals = loadMeals()
+        
+        for meal in savedMeals! {
+            if meal.name.lowercased().range(of: searchText) != nil {
+                print(meal.name + " True")
+            }
+        }
+        
+        //meals += savedMeals
     }
 
 }
