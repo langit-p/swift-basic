@@ -24,7 +24,7 @@ class MealTableViewController: UITableViewController, UISearchBarDelegate{
         navigationItem.leftBarButtonItem = editButtonItem
         
         // Load any saved meals, otherwise load sample data
-        if let savedMeals = loadMeals() {
+        if let savedMeals = loadMeals(keyword: "") {
             meals += savedMeals
         } else {
             //Load the sample data
@@ -187,8 +187,21 @@ class MealTableViewController: UITableViewController, UISearchBarDelegate{
         }
     }
     
-    private func loadMeals() -> [Meal]? {
-        return NSKeyedUnarchiver.unarchiveObject(withFile: Meal.ArchieveURL.path) as? [Meal]
+    private func loadMeals(keyword: String) -> [Meal]? {
+        let savedMeals = NSKeyedUnarchiver.unarchiveObject(withFile: Meal.ArchieveURL.path) as? [Meal]
+        if keyword.isEmpty {
+            return savedMeals
+        } else {
+            let filteredMeals = savedMeals?.filter() {
+                if let name = ($0 as Meal).name as String! {
+                    return name.lowercased().contains(keyword.lowercased())
+                } else {
+                    return false
+                }
+            }
+            
+            return filteredMeals
+        }
     }
     
     // Search bar function
@@ -211,18 +224,10 @@ class MealTableViewController: UITableViewController, UISearchBarDelegate{
     
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print("searchText : " + searchText)
+        let savedMeals = loadMeals(keyword: searchText)
+        meals = savedMeals!
+        tableView.reloadData()
         
-        //do search logic here
-        let savedMeals = loadMeals()
-        
-        for meal in savedMeals! {
-            if meal.name.lowercased().range(of: searchText) != nil {
-                print(meal.name + " True")
-            }
-        }
-        
-        //meals += savedMeals
     }
 
 }
